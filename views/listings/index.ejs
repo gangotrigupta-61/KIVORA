@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIVORA</title>
+</head>
+<body>
+    <h1>ALL LISTINGS ARE: </h1>
+    <form method="GET" action="/listings/new">
+      <button>Create New Listing</button>
+    </form>
+
+
+ <%   for(let list of allListing){     %>
+      <ul>
+        <li><a href="/listings/<%=list._id %>"><%= list.title %></a></li>
+      </ul>
+  <%  }   %>
+
+
+</body>
+</html>

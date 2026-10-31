@@ -81,9 +81,27 @@ app.post("/listings",async(req,res)=>{
 
 app.put("/listings/:id",async(req,res)=>{
     let {id}=req.params;
-    await Listing.findByIdAndUpdate(id,{...req.body.listing});
-    let listingdata= await Listing.findById(id);
-    res.render("listings/show.ejs",{listingdata});
+    // await Listing.findByIdAndUpdate(id,{...req.body.listing});
+    // let listingdata= await Listing.findById(id);
+    // res.render("listings/show.ejs",{listingdata});
+
+    
+    // 1. Separate the image object from the rest of the text fields
+    let { image, ...updateData } = req.body.listing;
+    
+    // 2. Perform the update on basic text fields first
+    let listing = await Listing.findByIdAndUpdate(id, updateData, { new: true });
+    
+    // 3. Handle the image object update safely
+    if (image && image.url && image.url.trim() !== "") {
+        listing.image = { url: image.url };
+        await listing.save();
+    }
+    
+    // 4. Redirect to the show page cleanly
+    res.redirect(`/listings/${id}`);
+
+
 });
 
 app.delete("/listings/:id",async(req,res)=>{

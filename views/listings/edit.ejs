@@ -8,9 +8,10 @@
          value="<%= listing.title %>">
         <br><br>
         <textarea name="listing[description]">
-            <%= listing.description %></textarea>
+            <%= listing.description.trim()%></textarea>
         <br><br>
-        <input type="text" name="listing[image]" value="<%= listing.image.url %>" id="">
+        <input type="text" name="listing[image][url]" 
+        value="<%= listing.image.url %>" id="">
         <br><br>
         <input type="number" name="listing[price]" 
         value="<%= listing.price %>">

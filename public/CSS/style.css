@@ -102,3 +102,18 @@ body{
 }
 
 
+/* show page */
+.show-img{
+  height: 30vh;
+  object-fit: cover;
+}
+.btns{
+    display: flex;
+    gap: 1rem;
+}
+.show-card{
+    padding-left: 0;
+    padding-right: 0;
+}
+
+

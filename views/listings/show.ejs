@@ -1,21 +1,34 @@
 <% layout("/layouts/boilerplate") %>
+<div class="row mt-3">
 
-<body>
-    <h1>DETAILED INFO</h1>
-  <h2><%= listingdata.title %></h2>
-  <ul>
-    <li><%= listingdata.description %></li>
-    <li>&#8377;<%= listingdata.price.toLocaleString("en-IN") %></li>
-    <li><%= listingdata.location %></li>
-    <li><%= listingdata.country %></li>
-  </ul>
+  <div class="col-8 offset-2">
+    <h1>Listing Details:</h1>
+</div>
 
-  <br>
-  <a href="/listings/<%=listingdata._id%>/edit">Edit this listing</a>
-  <br><br><br><br>
+ <div class="card col-6 offset-3 show-card">
+  <img src="<%=listingdata.image.url%>" alt="listingimage" srcset="" class="card-img-top show-img"/>
 
-   <form action="/listings/<%=listingdata._id%>?_method=DELETE" method="POST">
-     <button>Delete this listing</button>
+  <div class="card-body">
+    <p class="card-text">
+          <b> <%= listingdata.title %> </b><br>
+          <%= listingdata.description %> <br>
+          &#8377;<%= listingdata.price.toLocaleString("en-IN") %> <br>
+          <%= listingdata.location %>   <br>
+          <%= listingdata.country %>    <br>
+    </p>
+  </div>
+ </div>
+
+ 
+  <div class="col-6 offset-3 mt-3">
+    <div class="btns mb-5">
+     <a href="/listings/<%=listingdata._id%>/edit" class="btn btn-dark add-btn">Edit</a>
+
+ 
+    <form action="/listings/<%=listingdata._id%>?_method=DELETE"  onsubmit="return confirm('Are you sure you want to delete this listing? This action cannot be undone.');" method="POST">
+     <button class="btn btn-dark">Delete</button>
    </form>
+  </div>
+  </div>
 
-</body>
+</div>

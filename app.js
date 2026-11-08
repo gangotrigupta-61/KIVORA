@@ -9,6 +9,10 @@ const mongoose=require("mongoose");
 
 const MONGO_URL="mongodb://127.0.0.1:27017/kivora";
 
+const wrapAsync=require("./utils/wrapAsync.js");
+const ExpressError=require("./utils/ExpressError.js");
+const {listingSchema}=require("./schema.js");
+
 const methodOverride=require("method-override");
 app.use(methodOverride("_method"));
 app.engine("ejs",ejsMate);
@@ -34,6 +38,17 @@ app.get("/",(req,res)=>{
     res.send("root directory working");
 });
 
+const validateListing=(req,res,next)=>{
+    let {error}=listingSchema.validate(req.body);
+    if(error){
+        let errMsg= error.details.map((el)=> el.message).join(",");
+        throw new ExpressError(400,errMsg);
+    }
+    else{
+        next();
+    }
+};
+
 // app.get("/testlisting",(req,res)=>{
 //     let samplelisting= new Listing({
 //         title:"my new villa",
@@ -45,41 +60,68 @@ app.get("/",(req,res)=>{
 //     res.send("testroute");
 // });
 
-app.get("/listings",async (req,res)=>{
+//  Index Route
+app.get("/listings",wrapAsync(async (req,res)=>{
     const allListing=await Listing.find({});
     // console.log(allListing);
     res.render("listings/index.ejs",{allListing});
-});
+})
+);
 
-
+// New Route
 app.get("/listings/new",(req,res)=>{
     res.render("listings/new.ejs");
 });
 
-
-
-
-app.get("/listings/:id",async(req,res)=>{
+app.get("/listings/:id",wrapAsync(async(req,res)=>{
     let {id}=req.params;
     let listingdata= await Listing.findById(id);
     console.log(listingdata);
     res.render("listings/show.ejs",{listingdata});
-});
+}));
 
-app.get("/listings/:id/edit", async(req,res)=>{
+// show route
+app.get("/listings/:id/edit",wrapAsync(async(req,res)=>{
     let {id}=req.params;
     const listing=await Listing.findById(id);
     res.render("listings/edit.ejs",{listing});
-});
+}));
 
+// create route
+app.post("/listings",validateListing,
+    wrapAsync(async(req,res,next)=>{
 
-app.post("/listings",async(req,res)=>{
+    // if(!req.body.listing){
+    //     throw new ExpressError(400,"Send Valid data for listing!!");
+    // }
+
+   
     const newListing= new Listing(req.body.listing);
     await newListing.save();
     res.redirect("/listings");
-});
 
-app.put("/listings/:id",async(req,res)=>{
+    // if(!newListing.description){
+    //     throw new ExpressError(404,"Description is missing!")
+    // }
+    //  if(!newListing.title){
+    //     throw new ExpressError(404,"title is missing!")
+    // }
+    //  if(!newListing.location){
+    //     throw new ExpressError(404,"location is missing!")
+    // }
+
+    // await newListing.save();
+    // res.redirect("/listings");
+})
+);
+
+// Update Route
+app.put("/listings/:id",
+    validateListing,
+    wrapAsync(async(req,res)=>{
+    //   if(!req.body.listing){
+    //     throw new ExpressError(400,"Send Valid data for listing!!");
+    // }
     let {id}=req.params;
     // await Listing.findByIdAndUpdate(id,{...req.body.listing});
     // let listingdata= await Listing.findById(id);
@@ -100,19 +142,31 @@ app.put("/listings/:id",async(req,res)=>{
     
     // 4. Redirect to the show page cleanly
     res.redirect(`/listings/${id}`);
+}));
 
-
-});
-
-app.delete("/listings/:id",async(req,res)=>{
+app.delete("/listings/:id",wrapAsync(async(req,res)=>{
     let {id}=req.params;
     let deletedListing=await Listing.findByIdAndDelete(id);
     console.log(deletedListing);
     res.redirect("/listings");
+}));
+
+// custom error handler
+// app.use((err,req,res,next)=>{
+//     res.send("Something went wrong!!");
+// });
+
+app.all("*any",(req,res,next)=>{
+    next(new ExpressError(404,"Page Not Found!"));
 });
 
-
+// Express Error handler
+app.use((err,req,res,next)=>{
+   let {statusCode=500,message="Something went wrong!!"}=err;
+   res.status(statusCode).render("error.ejs",{err});
+//    res.status(statusCode).send(message);
+});
 
 app.listen("8080",()=>{
-    console.log("listening on port 8080");
+    console.log("server is listening on port 8080");
 });

@@ -11,7 +11,8 @@ const MONGO_URL="mongodb://127.0.0.1:27017/kivora";
 
 const wrapAsync=require("./utils/wrapAsync.js");
 const ExpressError=require("./utils/ExpressError.js");
-const {listingSchema}=require("./schema.js");
+const {listingSchema,reviewSchema}=require("./schema.js");
+const Review = require("./models/review.js");
 
 const methodOverride=require("method-override");
 app.use(methodOverride("_method"));
@@ -49,6 +50,18 @@ const validateListing=(req,res,next)=>{
     }
 };
 
+const validateReview=(req,res,next)=>{
+    let {error}=reviewSchema.validate(req.body);
+    if(error){
+        let errMsg= error.details.map((el)=> el.message).join(",");
+        throw new ExpressError(400,errMsg);
+    }
+    else{
+        next();
+    }
+};
+
+
 // app.get("/testlisting",(req,res)=>{
 //     let samplelisting= new Listing({
 //         title:"my new villa",
@@ -73,14 +86,15 @@ app.get("/listings/new",(req,res)=>{
     res.render("listings/new.ejs");
 });
 
+// Show Route
 app.get("/listings/:id",wrapAsync(async(req,res)=>{
     let {id}=req.params;
-    let listingdata= await Listing.findById(id);
+    let listingdata= await Listing.findById(id).populate("reviews");
     console.log(listingdata);
     res.render("listings/show.ejs",{listingdata});
 }));
 
-// show route
+
 app.get("/listings/:id/edit",wrapAsync(async(req,res)=>{
     let {id}=req.params;
     const listing=await Listing.findById(id);
@@ -144,12 +158,43 @@ app.put("/listings/:id",
     res.redirect(`/listings/${id}`);
 }));
 
+// delete route
 app.delete("/listings/:id",wrapAsync(async(req,res)=>{
     let {id}=req.params;
     let deletedListing=await Listing.findByIdAndDelete(id);
     console.log(deletedListing);
     res.redirect("/listings");
-}));
+})
+);
+
+// Reviews
+// Post Route
+
+app.post("/listings/:id/reviews",validateReview,wrapAsync(async(req,res)=>{
+
+    let listing=await Listing.findById(req.params.id);
+    let newReview= new Review(req.body.review); 
+    listing.reviews.push(newReview);
+    await newReview.save();
+    await listing.save();
+
+    // console.log("new review saved");
+    // res.send("new review saved");
+    res.redirect(`/listings/${listing._id}`);
+})
+);
+
+// delete route for reviews
+app.delete("/listings/:id/reviews/:reviewId",
+    wrapAsync(async(req,res)=>{
+        let {id,reviewId}=req.params;
+
+        await Listing.findByIdAndUpdate(id,{$pull:{reviews:reviewId}});
+        await Review.findByIdAndDelete(reviewId);
+
+        res.redirect(`/listings/${id}`);
+    }))
+
 
 // custom error handler
 // app.use((err,req,res,next)=>{
